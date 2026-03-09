@@ -490,39 +490,48 @@ async function fetchMarketCaps(tokens) {
       for (const r of arr) {
         if (!r?.result) continue;
         const mint = r.result.id;
-        const priceInfo = r.result.token_info?.price_info;
-        if (!priceInfo?.price_per_token) continue;
-
-        const supply = r.result.token_info?.supply;
-        const decimals = r.result.token_info?.decimals || 6;
-        const price = priceInfo.price_per_token;
-        const mc = supply ? (price * supply / Math.pow(10, decimals)) : null;
-
-        // Store USD MC on the token object for re-categorization
         const token = tokens.find(t => t.mintAddress === mint);
-        if (token && mc != null) {
-          token.mcUsd = mc;
-          // Move to migrated if MC > threshold (but not forced runners)
-          if (mc > MIGRATED_MC_USD && !FORCE_RUNNERS.includes(mint)) {
-            if (token.category !== 'migrated') {
-              token.category = 'migrated';
-              needsRecat = true;
-            }
-          }
+
+        // Update name, symbol, image from DAS metadata
+        const meta = r.result.content?.metadata;
+        const img = r.result.content?.links?.image || r.result.content?.files?.[0]?.uri;
+        if (token) {
+          if (meta?.name) token.name = meta.name;
+          if (meta?.symbol) token.symbol = meta.symbol;
+          if (img) token.imageUrl = img;
+          needsRecat = true; // re-render to show updated metadata
         }
 
-        // Update all MC labels for this mint
-        const els = document.querySelectorAll(`[data-mc-mint="${mint}"]`);
-        els.forEach(el => {
-          if (mc != null && mc > 0) {
-            const formatted = mc >= 1000000 ? '$' + (mc / 1000000).toFixed(2) + 'M'
-              : mc >= 1000 ? '$' + (mc / 1000).toFixed(1) + 'K'
-              : '$' + mc.toFixed(2);
-            el.textContent = formatted;
-            el.classList.remove('text-muted-foreground');
-            el.classList.add(mc > 10000 ? 'text-green-400' : 'text-muted-foreground');
+        // MC from price info
+        const priceInfo = r.result.token_info?.price_info;
+        if (priceInfo?.price_per_token) {
+          const supply = r.result.token_info?.supply;
+          const decimals = r.result.token_info?.decimals || 6;
+          const price = priceInfo.price_per_token;
+          const mc = supply ? (price * supply / Math.pow(10, decimals)) : null;
+
+          if (token && mc != null) {
+            token.mcUsd = mc;
+            if (mc > MIGRATED_MC_USD && !FORCE_RUNNERS.includes(mint)) {
+              if (token.category !== 'migrated') {
+                token.category = 'migrated';
+              }
+            }
           }
-        });
+
+          // Update all MC labels for this mint
+          const els = document.querySelectorAll(`[data-mc-mint="${mint}"]`);
+          els.forEach(el => {
+            if (mc != null && mc > 0) {
+              const formatted = mc >= 1000000 ? '$' + (mc / 1000000).toFixed(2) + 'M'
+                : mc >= 1000 ? '$' + (mc / 1000).toFixed(1) + 'K'
+                : '$' + mc.toFixed(2);
+              el.textContent = formatted;
+              el.classList.remove('text-muted-foreground');
+              el.classList.add(mc > 10000 ? 'text-green-400' : 'text-muted-foreground');
+            }
+          });
+        }
       }
     } catch (err) {
       console.error('getAsset batch error:', err);
