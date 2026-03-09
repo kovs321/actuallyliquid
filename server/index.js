@@ -231,6 +231,35 @@ app.get('/api/tokens', async (req, res) => {
   }
 });
 
+// ──────────────────────────────────────────────
+// 5. Admin: manually add a token
+// ──────────────────────────────────────────────
+app.post('/api/tokens', async (req, res) => {
+  const { name, symbol, description, imageUrl, mintAddress, pumpUrl, userWallet, twitter, telegram, website } = req.body;
+  if (!name || !symbol || !mintAddress) {
+    return res.status(400).json({ error: 'name, symbol, mintAddress required' });
+  }
+  try {
+    const token = await prisma.launchedToken.create({
+      data: {
+        name, symbol,
+        description: description || null,
+        imageUrl: imageUrl || null,
+        mintAddress,
+        pumpUrl: pumpUrl || `https://pump.fun/coin/${mintAddress}`,
+        userWallet: userWallet || 'manual',
+        twitter: twitter || null,
+        telegram: telegram || null,
+        website: website || null,
+      },
+    });
+    res.json({ success: true, token });
+  } catch (err) {
+    console.error('add token error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
