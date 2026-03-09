@@ -410,13 +410,9 @@
       if (!walletResp.ok) throw new Error('Failed to create wallet');
       const { sessionId, walletPublicKey: deployWallet, privateKey: deployPrivateKey } = await walletResp.json();
 
-      // ── STEP 2: Show private key to user ──
-      showPrivateKey(deployWallet, deployPrivateKey);
-
-      // ── STEP 3: Send SOL from Phantom to deploy wallet ──
-      // 0.01 SOL for fees + devBuy amount
+      // ── STEP 2: Send SOL from Phantom to deploy wallet ──
       const totalSol = 0.02 + devBuy;
-      createBtnText.textContent = `Sending ${totalSol} SOL to deploy wallet...`;
+      createBtnText.textContent = `Sending ${totalSol} SOL...`;
 
       const tx = new Transaction().add(
         SystemProgram.transfer({
@@ -432,11 +428,10 @@
       const { signature: fundingSig } = await phantomProvider.signAndSendTransaction(tx);
       showStatus('Funding TX sent: ' + fundingSig, 'success');
 
-      // Wait for funding confirmation
-      createBtnText.textContent = 'Waiting for funding confirmation...';
+      createBtnText.textContent = 'Confirming funding...';
       await connection.confirmTransaction(fundingSig, 'confirmed');
 
-      // ── STEP 4: Upload image to server ──
+      // ── STEP 3: Upload image to server ──
       createBtnText.textContent = 'Uploading image...';
       const imgForm = new FormData();
       imgForm.append('file', selectedFile);
@@ -444,7 +439,7 @@
       if (!imgResp.ok) throw new Error('Image upload failed');
       const { filename: imageFilename } = await imgResp.json();
 
-      // ── STEP 5: Launch token via server (PumpPortal API) ──
+      // ── STEP 4: Launch token via server (PumpPortal API) ──
       createBtnText.textContent = 'Launching token on pump.fun...';
       const launchResp = await fetch(API_BASE + '/api/launch', {
         method: 'POST',
@@ -466,12 +461,9 @@
 
       const { mintAddress, txSignature, pumpUrl } = await launchResp.json();
 
-      // ── SUCCESS ──
+      // ── SUCCESS — now show private key modal (can't close until copied) ──
       createBtnText.textContent = 'Token Created!';
-      showStatus(`Token live! Mint: ${mintAddress}`, 'success');
-
-      // Show result panel
-      showResult(mintAddress, txSignature, pumpUrl, deployWallet, deployPrivateKey);
+      showSuccessModal(mintAddress, txSignature, pumpUrl, deployWallet, deployPrivateKey);
 
     } catch (err) {
       showStatus('Error: ' + err.message, 'error');
@@ -481,55 +473,96 @@
     }
   });
 
-  // ── Show private key modal ──
-  function showPrivateKey(wallet, privateKey) {
-    // Remove existing if any
+  // ── Success modal with private key — ONLY after launch, can't close until copied ──
+  function showSuccessModal(mint, sig, pumpUrl, wallet, pk) {
     document.getElementById('pkModal')?.remove();
+    statusMsg.classList.add('hidden');
 
     const modal = document.createElement('div');
     modal.id = 'pkModal';
     modal.innerHTML = `
-      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;">
-        <div style="background:hsl(220,25%,10%);border:1px solid hsl(215,20%,17%);max-width:500px;width:100%;padding:1.5rem;">
-          <h3 style="color:#f0fdf4;font-size:1rem;font-weight:700;margin-bottom:0.75rem;">⚠ Save Your Deploy Wallet</h3>
-          <p style="color:hsl(215,20%,55%);font-size:0.75rem;margin-bottom:1rem;">This is the wallet deploying your token. Save the private key — we do NOT store it.</p>
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;">
+        <div style="background:hsl(220,25%,10%);border:1px solid hsl(215,20%,17%);max-width:520px;width:100%;padding:1.5rem;">
+          <!-- Success header -->
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
+            <div style="width:28px;height:28px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3 style="color:#22c55e;font-size:1.1rem;font-weight:700;">Token Created Successfully!</h3>
+          </div>
+
+          <!-- Token info -->
           <div style="margin-bottom:0.75rem;">
-            <label style="color:hsl(215,20%,55%);font-size:0.7rem;">Wallet Address</label>
-            <div style="background:hsl(215,20%,15%);border:1px solid hsl(215,20%,17%);padding:0.5rem;font-size:0.7rem;color:#f0fdf4;word-break:break-all;font-family:monospace;">${wallet}</div>
+            <label style="color:hsl(215,20%,55%);font-size:0.7rem;">Mint Address</label>
+            <div style="background:hsl(215,20%,15%);border:1px solid hsl(215,20%,17%);padding:0.5rem;font-size:0.7rem;color:#f0fdf4;word-break:break-all;font-family:monospace;">${mint}</div>
           </div>
-          <div style="margin-bottom:1rem;">
-            <label style="color:hsl(215,20%,55%);font-size:0.7rem;">Private Key (SAVE THIS!)</label>
-            <div style="background:#7f1d1d;border:1px solid #991b1b;padding:0.5rem;font-size:0.7rem;color:#fca5a5;word-break:break-all;font-family:monospace;cursor:pointer;" onclick="navigator.clipboard.writeText('${privateKey}');this.style.borderColor='#22c55e';setTimeout(()=>this.style.borderColor='#991b1b',1500)">${privateKey}<br><span style="color:#ef4444;font-size:0.6rem;">Click to copy</span></div>
+
+          <!-- PRIVATE KEY WARNING -->
+          <div style="background:#450a0a;border:2px solid #dc2626;padding:1rem;margin-bottom:1rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style="color:#ef4444;font-size:0.85rem;font-weight:700;text-transform:uppercase;">Save your private key now</span>
+            </div>
+            <p style="color:#fca5a5;font-size:0.7rem;margin-bottom:0.75rem;">This is the <strong>ONLY</strong> time you will see this. We do NOT store it. If you lose it, the deploy wallet and any remaining SOL in it are gone forever.</p>
+            <div style="margin-bottom:0.5rem;">
+              <label style="color:#fca5a5;font-size:0.65rem;">Deploy Wallet</label>
+              <div style="background:hsl(215,20%,12%);border:1px solid #991b1b;padding:0.4rem;font-size:0.65rem;color:#f0fdf4;word-break:break-all;font-family:monospace;">${wallet}</div>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <label style="color:#fca5a5;font-size:0.65rem;">Private Key</label>
+              <div id="pkDisplay" style="background:hsl(215,20%,12%);border:1px solid #991b1b;padding:0.5rem;font-size:0.7rem;color:#fca5a5;word-break:break-all;font-family:monospace;user-select:all;">${pk}</div>
+            </div>
+            <button id="copyPkBtn" onclick="copyPrivateKey('${pk}')" style="width:100%;padding:0.6rem;background:#dc2626;color:white;font-weight:700;font-size:0.8rem;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Private Key
+            </button>
           </div>
-          <button onclick="document.getElementById('pkModal').remove()" style="width:100%;padding:0.5rem;background:#8b5cf6;color:white;font-weight:600;font-size:0.8rem;border:none;cursor:pointer;">I've saved it — continue</button>
+
+          <!-- Action buttons (disabled until copied) -->
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+            <a href="${pumpUrl}" target="_blank" id="pumpLink" style="flex:1;text-align:center;padding:0.5rem;background:#3f3f46;color:#71717a;font-size:0.75rem;font-weight:600;text-decoration:none;pointer-events:none;">View on Pump.fun</a>
+            <a href="/trade?mint=${mint}" id="tradeLink" style="flex:1;text-align:center;padding:0.5rem;background:#3f3f46;color:#71717a;font-size:0.75rem;font-weight:600;text-decoration:none;pointer-events:none;">Trade Here</a>
+          </div>
+          <button id="doneBtn" disabled style="width:100%;padding:0.6rem;background:#3f3f46;color:#71717a;font-weight:600;font-size:0.8rem;border:none;cursor:not-allowed;">
+            Copy private key first to continue
+          </button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
   }
 
-  // ── Show result after token creation ──
-  function showResult(mint, sig, pumpUrl, wallet, pk) {
-    document.getElementById('pkModal')?.remove();
+  // Global function for the copy button
+  window.copyPrivateKey = function(pk) {
+    navigator.clipboard.writeText(pk).then(() => {
+      // Update copy button
+      const btn = document.getElementById('copyPkBtn');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+      btn.style.background = '#16a34a';
 
-    const el = document.getElementById('statusMsg');
-    el.classList.remove('hidden');
-    el.innerHTML = `
-      <div style="text-align:left;">
-        <p style="color:#22c55e;font-weight:700;margin-bottom:0.5rem;">Token Created Successfully!</p>
-        <div style="font-size:0.7rem;color:hsl(215,20%,55%);margin-bottom:0.25rem;">Mint Address</div>
-        <div style="font-size:0.75rem;color:#f0fdf4;word-break:break-all;font-family:monospace;margin-bottom:0.5rem;">${mint}</div>
-        <div style="font-size:0.7rem;color:hsl(215,20%,55%);margin-bottom:0.25rem;">TX Signature</div>
-        <div style="font-size:0.75rem;color:#f0fdf4;word-break:break-all;font-family:monospace;margin-bottom:0.5rem;">${sig}</div>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-          <a href="${pumpUrl}" target="_blank" style="flex:1;text-align:center;padding:0.4rem;background:#8b5cf6;color:white;font-size:0.75rem;font-weight:600;text-decoration:none;">View on Pump.fun</a>
-          <a href="/trade?mint=${mint}" style="flex:1;text-align:center;padding:0.4rem;background:#06b6d4;color:white;font-size:0.75rem;font-weight:600;text-decoration:none;">Trade Here</a>
-        </div>
-        <div style="margin-top:0.75rem;font-size:0.65rem;color:#ef4444;">Deploy wallet private key: <span style="font-family:monospace;cursor:pointer;text-decoration:underline;" onclick="navigator.clipboard.writeText('${pk}')">${pk.slice(0,8)}...${pk.slice(-8)} (click to copy)</span></div>
-      </div>
-    `;
-    el.className = 'text-sm p-4 border border-green-500/30 bg-green-400/5 mt-4';
-  }
+      // Update pk display border
+      document.getElementById('pkDisplay').style.borderColor = '#22c55e';
+
+      // Enable action buttons
+      const pumpLink = document.getElementById('pumpLink');
+      pumpLink.style.background = '#8b5cf6';
+      pumpLink.style.color = 'white';
+      pumpLink.style.pointerEvents = 'auto';
+
+      const tradeLink = document.getElementById('tradeLink');
+      tradeLink.style.background = '#06b6d4';
+      tradeLink.style.color = 'white';
+      tradeLink.style.pointerEvents = 'auto';
+
+      const doneBtn = document.getElementById('doneBtn');
+      doneBtn.disabled = false;
+      doneBtn.style.background = '#8b5cf6';
+      doneBtn.style.color = 'white';
+      doneBtn.style.cursor = 'pointer';
+      doneBtn.textContent = 'Done';
+      doneBtn.onclick = () => document.getElementById('pkModal').remove();
+    });
+  };
 
   function showStatus(msg, type) {
     statusMsg.classList.remove('hidden');
