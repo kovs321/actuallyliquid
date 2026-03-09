@@ -267,10 +267,10 @@ function renderTokenCard(token) {
     : '';
   const fallback = `<div class="${token.imageUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full text-muted-foreground text-xs font-bold">${token.symbol?.slice(0,3) || '?'}</div>`;
   const ago = timeAgo(new Date(token.createdAt));
-  const mcLabel = token.mcSol != null ? `<span class="text-[10px] font-semibold ${token.mcSol > 50 ? 'text-green-400' : 'text-muted-foreground'}">${token.mcSol.toFixed(1)} SOL</span>` : '';
+  const mcLabel = token.mcSol != null ? `<span class="text-[10px] font-semibold ${token.mcSol > 50 ? 'text-green-400' : 'text-muted-foreground'}" data-mc-mint="${token.mintAddress}">${token.mcSol.toFixed(1)} SOL</span>` : '';
   const progress = token.progressPct != null ? `
-    <div class="flex gap-0.5 h-1 mt-1">
-      <div class="flex-1 relative overflow-hidden bg-slate-200/10"><div class="absolute inset-y-0 left-0 bg-fuchsia-400 transition-all" style="width:${token.progressPct.toFixed(1)}%"></div></div>
+    <div class="flex gap-0.5 h-2 mt-1">
+      <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400 transition-all" style="width:${token.progressPct.toFixed(1)}%"></div></div>
     </div>` : '';
   return `
     <a href="/token?mint=${token.mintAddress}" class="flex gap-3 p-2 border border-border hover:border-violet-500/50 transition-colors cursor-pointer">
@@ -441,6 +441,9 @@ async function loadTokens() {
 
     // Update mobile
     updateMobileColumn();
+
+    // Fetch real MC from Helius getAsset (runs in background, updates labels)
+    fetchMarketCaps(enriched);
   } catch (err) {
     console.error('Failed to load tokens:', err);
   }
@@ -453,6 +456,57 @@ function updateMobileColumn() {
   document.getElementById('mobileColTitle').textContent = titles[col];
   const msgs = { new: 'No new coins yet', runners: 'No runners yet', migrated: 'No migrated coins yet' };
   renderColumn(mobCol, categorized[col], msgs[col], col === 'new');
+}
+
+// Fetch MC via Helius getAsset for all tokens with mint addresses
+async function fetchMarketCaps(tokens) {
+  const mints = tokens.filter(t => t.mintAddress).map(t => t.mintAddress);
+  if (mints.length === 0) return;
+
+  // Batch getAsset calls (5 at a time to avoid rate limits)
+  for (let i = 0; i < mints.length; i += 5) {
+    const batch = mints.slice(i, i + 5);
+    const requests = batch.map((mint, idx) => ({
+      jsonrpc: '2.0', id: i + idx, method: 'getAsset', params: { id: mint },
+    }));
+
+    try {
+      const resp = await fetch(HELIUS_RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requests),
+      });
+      const results = await resp.json();
+      const arr = Array.isArray(results) ? results : [results];
+
+      for (const r of arr) {
+        if (!r?.result) continue;
+        const mint = r.result.id;
+        const priceInfo = r.result.token_info?.price_info;
+        if (!priceInfo?.price_per_token) continue;
+
+        const supply = r.result.token_info?.supply;
+        const decimals = r.result.token_info?.decimals || 6;
+        const price = priceInfo.price_per_token;
+        const mc = supply ? (price * supply / Math.pow(10, decimals)) : null;
+
+        // Update all MC labels for this mint
+        const els = document.querySelectorAll(`[data-mc-mint="${mint}"]`);
+        els.forEach(el => {
+          if (mc != null && mc > 0) {
+            const formatted = mc >= 1000000 ? '$' + (mc / 1000000).toFixed(2) + 'M'
+              : mc >= 1000 ? '$' + (mc / 1000).toFixed(1) + 'K'
+              : '$' + mc.toFixed(2);
+            el.textContent = formatted;
+            el.classList.remove('text-muted-foreground');
+            el.classList.add(mc > 10000 ? 'text-green-400' : 'text-muted-foreground');
+          }
+        });
+      }
+    } catch (err) {
+      console.error('getAsset batch error:', err);
+    }
+  }
 }
 
 // Load tokens on page load and refresh every 30 seconds
