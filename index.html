@@ -255,6 +255,10 @@ const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
 // Runner threshold: >= 1/3 of 85 SOL bonding curve (~28.33 SOL)
 const RUNNER_SOL_THRESHOLD = 85 / 3;
+// Migrated threshold: MC > $35.6k USD
+const MIGRATED_MC_USD = 35600;
+// Force these mints into runners
+const FORCE_RUNNERS = ['54XuCEMgpQnmZ8Vg731MBJoxUV6fpaETNBPYDzcqpump'];
 
 // Categorized tokens cache
 let categorized = { new: [], runners: [], migrated: [] };
@@ -392,7 +396,9 @@ async function fetchBondingCurves(tokens) {
       const progressPct = Math.min(100, (realSol / 85) * 100);
 
       let category;
-      if (complete) {
+      if (FORCE_RUNNERS.includes(token.mintAddress)) {
+        category = 'runners';
+      } else if (complete) {
         category = 'migrated';
       } else if (realSol >= RUNNER_SOL_THRESHOLD) {
         category = 'runners';
@@ -463,6 +469,8 @@ async function fetchMarketCaps(tokens) {
   const mints = tokens.filter(t => t.mintAddress).map(t => t.mintAddress);
   if (mints.length === 0) return;
 
+  let needsRecat = false;
+
   // Batch getAsset calls (5 at a time to avoid rate limits)
   for (let i = 0; i < mints.length; i += 5) {
     const batch = mints.slice(i, i + 5);
@@ -490,6 +498,19 @@ async function fetchMarketCaps(tokens) {
         const price = priceInfo.price_per_token;
         const mc = supply ? (price * supply / Math.pow(10, decimals)) : null;
 
+        // Store USD MC on the token object for re-categorization
+        const token = tokens.find(t => t.mintAddress === mint);
+        if (token && mc != null) {
+          token.mcUsd = mc;
+          // Move to migrated if MC > threshold (but not forced runners)
+          if (mc > MIGRATED_MC_USD && !FORCE_RUNNERS.includes(mint)) {
+            if (token.category !== 'migrated') {
+              token.category = 'migrated';
+              needsRecat = true;
+            }
+          }
+        }
+
         // Update all MC labels for this mint
         const els = document.querySelectorAll(`[data-mc-mint="${mint}"]`);
         els.forEach(el => {
@@ -506,6 +527,27 @@ async function fetchMarketCaps(tokens) {
     } catch (err) {
       console.error('getAsset batch error:', err);
     }
+  }
+
+  // Re-categorize and re-render if any tokens moved to migrated
+  if (needsRecat) {
+    categorized = { new: [], runners: [], migrated: [] };
+    for (const t of tokens) categorized[t.category].push(t);
+    categorized.runners.sort((a, b) => (b.mcSol || 0) - (a.mcSol || 0));
+    categorized.migrated.sort((a, b) => (b.mcUsd || b.mcSol || 0) - (a.mcUsd || a.mcSol || 0));
+
+    renderColumn(document.getElementById('newCoinsCol'), categorized.new, 'No new coins yet', true);
+    renderColumn(document.getElementById('runnersCol'), categorized.runners, 'No runners yet', false);
+    renderColumn(document.getElementById('migratedCol'), categorized.migrated, 'No migrated coins yet', false);
+
+    const nc = categorized.new.length, rc = categorized.runners.length, mc = categorized.migrated.length;
+    document.getElementById('newCount').textContent = `(${nc})`;
+    document.getElementById('runnersCount').textContent = `(${rc})`;
+    document.getElementById('migratedCount').textContent = `(${mc})`;
+    const ncm = document.getElementById('newCountMob'); if (ncm) ncm.textContent = `(${nc})`;
+    const rcm = document.getElementById('runnersCountMob'); if (rcm) rcm.textContent = `(${rc})`;
+    const mcm = document.getElementById('migratedCountMob'); if (mcm) mcm.textContent = `(${mc})`;
+    updateMobileColumn();
   }
 }
 
