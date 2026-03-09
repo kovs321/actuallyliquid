@@ -1,0 +1,677 @@
+<html lang="en" class="dark"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+              pixel: ['Silkscreen', 'monospace'],
+            },
+            colors: {
+              border: 'hsl(215, 20%, 17%)',
+              background: 'hsl(220, 25%, 8%)',
+              'background-header': 'hsl(220, 25%, 10%)',
+              foreground: 'hsl(210, 40%, 98%)',
+              card: 'hsl(220, 25%, 10%)',
+              muted: { DEFAULT: 'hsl(215, 20%, 15%)', foreground: 'hsl(215, 20%, 55%)' },
+              violet: { 400: '#a78bfa', 500: '#8b5cf6' },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .btn-primary { background: #8b5cf6; color: white; border-radius: 4px; }
+      .btn-primary:hover { background: #7c3aed; }
+      .btn-accent { background: #06b6d4; color: white; border-radius: 4px; }
+      .btn-accent:hover { background: #0891b2; }
+      .font-pixel { font-family: 'Silkscreen', monospace; }
+      .crt-scanlines { background-color: hsl(220, 25%, 8%); }
+      .scrollable-page { height: 100%; overflow-y: auto; }
+      .tab-active { background: hsl(215, 20%, 15%); color: #f0fdf4; border-bottom: 2px solid #8b5cf6; }
+      .tab-inactive { color: hsl(215, 20%, 55%); }
+      .tab-inactive:hover { color: hsl(210, 40%, 98%); }
+      .btn-buy { background: #22c55e; color: white; border-radius: 4px; }
+      .btn-buy:hover { background: #16a34a; }
+      .btn-buy:disabled { opacity: 0.5; cursor: not-allowed; }
+      .btn-sell { background: #ef4444; color: white; border-radius: 4px; }
+      .btn-sell:hover { background: #dc2626; }
+      .btn-sell:disabled { opacity: 0.5; cursor: not-allowed; }
+      .preset-btn { background: hsl(215, 20%, 15%); border: 1px solid hsl(215, 20%, 17%); color: hsl(215, 20%, 55%); border-radius: 4px; cursor: pointer; }
+      .preset-btn:hover { color: hsl(210, 40%, 98%); border-color: #8b5cf6; }
+    </style>
+    <title>Trade | actuallyliquid.fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="crt-scanlines h-screen bg-background text-foreground flex flex-col overflow-hidden">
+  <!-- Header -->
+  <header class="z-50 w-full bg-background-header shrink-0">
+    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-12 xl:px-20 py-2 min-h-12 bg-muted/40">
+      <div class="flex items-center gap-2">
+        <a class="flex items-center gap-1 shrink-0" href="index.html">
+          <span class="text-base font-bold tracking-tight font-pixel">actuallyliquid.fun</span>
+        </a>
+        <div class="hidden sm:block h-4 w-px bg-border mx-1"></div>
+        <nav class="items-center hidden sm:flex">
+          <a class="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground" href="index.html">Home</a>
+          <a class="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-violet-400" href="trade.html">Trade</a>
+        </nav>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 shrink-0">
+        <a class="h-7 px-2 flex items-center gap-1 btn-primary border-0 text-xs font-semibold" href="create.html">+ Create</a>
+        <button id="connectWalletBtn" class="h-7 px-2.5 flex items-center gap-1.5 btn-accent border-0 text-xs font-semibold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+          <span id="walletBtnText">Connect Wallet</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="px-4 sm:px-6 lg:px-12 xl:px-20 py-4 sm:py-6 flex-1 min-h-0 pb-0 overflow-hidden">
+    <div class="scrollable-page">
+      <div class="max-w-2xl mx-auto pb-8">
+        <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+          <span class="text-sm font-medium">Back to Coins</span>
+        </a>
+
+        <!-- Token Address Input -->
+        <div class="border border-border bg-card overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+            <h2 class="text-lg font-bold text-foreground">Trade on Bonding Curve</h2>
+          </div>
+          <div class="p-4">
+            <div class="flex flex-col gap-1.5 mb-4">
+              <label class="text-foreground text-sm font-semibold">Token Mint Address</label>
+              <div class="flex gap-2">
+                <input id="mintAddress" class="flex-1 min-w-0 border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 font-mono" placeholder="Enter pump.fun token mint address...">
+                <button id="loadTokenBtn" class="px-4 h-11 btn-primary text-sm font-semibold shrink-0">Load</button>
+              </div>
+            </div>
+
+            <!-- Token Info (hidden until loaded) -->
+            <div id="tokenInfo" class="hidden border border-border bg-muted/30 p-4 mb-4">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-muted border border-border flex items-center justify-center text-muted-foreground text-xs font-bold" id="tokenIcon">?</div>
+                <div>
+                  <h3 id="tokenName" class="text-foreground font-semibold">-</h3>
+                  <p id="tokenTicker" class="text-muted-foreground text-sm">$-</p>
+                </div>
+                <div class="ml-auto text-right">
+                  <p class="text-xs text-muted-foreground">Price</p>
+                  <p id="tokenPrice" class="text-foreground font-semibold text-sm">-</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-muted-foreground">MC</p>
+                  <p id="tokenMC" class="text-foreground font-semibold text-sm">-</p>
+                </div>
+              </div>
+              <div class="flex gap-0.5 h-2 mb-2">
+                <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div id="progressBar" class="absolute inset-y-0 left-0 bg-fuchsia-400 transition-all" style="width:0%"></div></div>
+              </div>
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span id="progressText">0% bonded</span>
+                <span id="completeText"></span>
+              </div>
+            </div>
+
+            <!-- Buy / Sell Tabs -->
+            <div id="tradePanel" class="hidden">
+              <div class="flex border-b border-border mb-4">
+                <button id="tabBuy" class="flex-1 py-2.5 text-sm font-semibold tab-active transition-colors" onclick="switchTab('buy')">Buy</button>
+                <button id="tabSell" class="flex-1 py-2.5 text-sm font-semibold tab-inactive transition-colors" onclick="switchTab('sell')">Sell</button>
+              </div>
+
+              <!-- Buy Panel -->
+              <div id="buyPanel">
+                <div class="flex flex-col gap-1.5 mb-3">
+                  <div class="flex items-center justify-between">
+                    <label class="text-foreground text-sm font-semibold">Amount (SOL)</label>
+                    <span id="solBalance" class="text-muted-foreground text-xs">Balance: -</span>
+                  </div>
+                  <input id="buyAmount" type="number" step="0.01" min="0.001" class="w-full border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="0.0">
+                </div>
+                <div class="flex gap-2 mb-3">
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="document.getElementById('buyAmount').value='0.1'">0.1</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="document.getElementById('buyAmount').value='0.25'">0.25</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="document.getElementById('buyAmount').value='0.5'">0.5</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="document.getElementById('buyAmount').value='1'">1</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="document.getElementById('buyAmount').value='5'">5</button>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                  <label class="text-muted-foreground text-xs">Slippage</label>
+                  <div class="flex items-center gap-2">
+                    <input id="buySlippage" type="number" value="10" min="1" max="50" class="w-16 border px-2 py-1 text-xs outline-none bg-muted border-border text-foreground text-center">
+                    <span class="text-muted-foreground text-xs">%</span>
+                  </div>
+                </div>
+                <div id="buyEstimate" class="text-xs text-muted-foreground mb-3"></div>
+                <button id="buyBtn" class="w-full py-3 btn-buy text-sm font-bold" disabled>Connect wallet to buy</button>
+              </div>
+
+              <!-- Sell Panel -->
+              <div id="sellPanel" class="hidden">
+                <div class="flex flex-col gap-1.5 mb-3">
+                  <div class="flex items-center justify-between">
+                    <label class="text-foreground text-sm font-semibold">Amount (Tokens)</label>
+                    <span id="tokenBalance" class="text-muted-foreground text-xs cursor-pointer hover:text-foreground" onclick="sellMax()">Balance: -</span>
+                  </div>
+                  <input id="sellAmount" type="number" step="1" min="1" class="w-full border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="0">
+                </div>
+                <div class="flex gap-2 mb-3">
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="sellPercent(25)">25%</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="sellPercent(50)">50%</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="sellPercent(75)">75%</button>
+                  <button class="preset-btn flex-1 py-1.5 text-xs font-medium" onclick="sellPercent(100)">100%</button>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                  <label class="text-muted-foreground text-xs">Slippage</label>
+                  <div class="flex items-center gap-2">
+                    <input id="sellSlippage" type="number" value="10" min="1" max="50" class="w-16 border px-2 py-1 text-xs outline-none bg-muted border-border text-foreground text-center">
+                    <span class="text-muted-foreground text-xs">%</span>
+                  </div>
+                </div>
+                <div id="sellEstimate" class="text-xs text-muted-foreground mb-3"></div>
+                <button id="sellBtn" class="w-full py-3 btn-sell text-sm font-bold" disabled>Connect wallet to sell</button>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div id="statusMsg" class="hidden text-center text-sm p-3 border border-border mt-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-border bg-background-header shrink-0">
+    <div class="px-4 sm:px-6 lg:px-12 xl:px-20 py-4 flex items-center justify-between gap-4">
+      <span class="text-sm text-muted-foreground">© 2026 actuallyliquid.fun</span>
+      <div class="flex items-center gap-4 text-sm">
+        <a class="text-muted-foreground hover:text-foreground transition-colors" href="#">Docs</a>
+        <span class="text-muted-foreground/50">•</span>
+        <a class="text-muted-foreground hover:text-foreground transition-colors" href="#">Terms</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script type="module">
+import {
+  Connection, PublicKey, TransactionInstruction, TransactionMessage,
+  VersionedTransaction, SystemProgram, ComputeBudgetProgram
+} from 'https://esm.sh/@solana/web3.js@1.95.8';
+
+// ── Constants (from solbot) ──
+const PUMP_PROGRAM = new PublicKey('6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P');
+const PUMP_FEE_PROGRAM = new PublicKey('pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ');
+const TOKEN_2022 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+const ASSOC_TOKEN = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const SYS_PROGRAM = new PublicKey('11111111111111111111111111111111');
+const PUMP_GLOBAL = new PublicKey('4wTV1YmiEkRvAtNtsSGPtUrqRYQMe5SKy2uB4Jjaxnjf');
+const PUMP_FEE_RECIPIENT = new PublicKey('62qc2CNXwrYqQScmEdiZFFAnJR262PxWEuNQtxfafNgV');
+const PUMP_EVENT_AUTH = new PublicKey('Ce6TQqeHC9p8KetsN6JsjHK7UTZk7nasjjnr7XxXp9F1');
+const PUMP_FEE_CONFIG = new PublicKey('8Wf5TiAheLUqBrKXeYg2JtAFFMWtKdG2BSFgqUcPVwTt');
+
+const BUY_EXACT_SOL_DISC = new Uint8Array([56, 252, 116, 8, 158, 223, 205, 95]);
+const SELL_DISC = new Uint8Array([51, 230, 133, 164, 1, 127, 131, 173]);
+
+const RPC = 'https://api.mainnet-beta.solana.com';
+const connection = new Connection(RPC, 'confirmed');
+
+// ── State ──
+let walletPubkey = null;
+let provider = null;
+let bondingCurveState = null;
+let userTokenBalance = 0n;
+let userTokenAccount = null;
+
+// ── PDA helpers (matching solbot/src/parser/accounts.ts) ──
+function deriveBondingCurve(mint) {
+  return PublicKey.findProgramAddressSync([new TextEncoder().encode('bonding-curve'), mint.toBytes()], PUMP_PROGRAM);
+}
+function deriveBondingCurveVault(bc, mint) {
+  return PublicKey.findProgramAddressSync([bc.toBytes(), TOKEN_2022.toBytes(), mint.toBytes()], ASSOC_TOKEN)[0];
+}
+function deriveCreatorVault(creator) {
+  return PublicKey.findProgramAddressSync([new TextEncoder().encode('creator-vault'), creator.toBytes()], PUMP_PROGRAM);
+}
+function deriveGlobalVolume() {
+  return PublicKey.findProgramAddressSync([new TextEncoder().encode('global_volume_accumulator')], PUMP_PROGRAM);
+}
+function deriveUserVolume(user) {
+  return PublicKey.findProgramAddressSync([new TextEncoder().encode('user_volume_accumulator'), user.toBytes()], PUMP_PROGRAM);
+}
+function deriveBondingCurveV2(mint) {
+  return PublicKey.findProgramAddressSync([new TextEncoder().encode('bonding-curve-v2'), mint.toBytes()], PUMP_PROGRAM);
+}
+function deriveATA(owner, mint, tokenProgram = TOKEN_2022) {
+  return PublicKey.findProgramAddressSync([owner.toBytes(), tokenProgram.toBytes(), mint.toBytes()], ASSOC_TOKEN)[0];
+}
+
+// ── Bonding curve math (from solbot/src/utils/math.ts) ──
+function tokensForSol(solLamports, vSol, vToken) {
+  return (vToken * solLamports) / (vSol + solLamports);
+}
+function solForTokens(tokenAmount, vSol, vToken) {
+  return (vSol * tokenAmount) / (vToken + tokenAmount);
+}
+
+// ── Instruction encoding ──
+function encodeBuyExactSolIn(solLamports, minTokensOut) {
+  const data = new ArrayBuffer(24);
+  const view = new DataView(data);
+  new Uint8Array(data).set(BUY_EXACT_SOL_DISC, 0);
+  view.setBigUint64(8, solLamports, true);
+  view.setBigUint64(16, minTokensOut, true);
+  return new Uint8Array(data);
+}
+function encodeSell(tokenAmount, minSolOut) {
+  const data = new ArrayBuffer(24);
+  const view = new DataView(data);
+  new Uint8Array(data).set(SELL_DISC, 0);
+  view.setBigUint64(8, tokenAmount, true);
+  view.setBigUint64(16, minSolOut, true);
+  return new Uint8Array(data);
+}
+
+// ── InitializeAccount3 instruction (Token2022 opcode 18) ──
+function createInitAccount3Ix(account, mint, owner) {
+  const data = new Uint8Array(33);
+  data[0] = 18;
+  data.set(owner.toBytes(), 1);
+  return new TransactionInstruction({
+    programId: TOKEN_2022,
+    keys: [
+      { pubkey: account, isSigner: false, isWritable: true },
+      { pubkey: mint, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+}
+
+// ── Close account instruction (Token2022 opcode 9) ──
+function createCloseAccountIx(account, dest, owner) {
+  return new TransactionInstruction({
+    programId: TOKEN_2022,
+    keys: [
+      { pubkey: account, isSigner: false, isWritable: true },
+      { pubkey: dest, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: true, isWritable: false },
+    ],
+    data: new Uint8Array([9]),
+  });
+}
+
+// ── Parse bonding curve on-chain data ──
+function parseBondingCurve(data, mint, bcPubkey) {
+  const buf = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const off = 8; // skip discriminator
+  const virtualTokenReserves = buf.getBigUint64(off, true);
+  const virtualSolReserves = buf.getBigUint64(off + 8, true);
+  const realTokenReserves = buf.getBigUint64(off + 16, true);
+  const realSolReserves = buf.getBigUint64(off + 24, true);
+  const tokenTotalSupply = buf.getBigUint64(off + 32, true);
+  const complete = data[off + 40] === 1;
+  const creator = new PublicKey(data.slice(49, 81));
+  const isCashbackCoin = data.length > 82 ? data[82] === 1 : false;
+  return { mint, bondingCurve: bcPubkey, creator, virtualTokenReserves, virtualSolReserves, realTokenReserves, realSolReserves, tokenTotalSupply, complete, isCashbackCoin };
+}
+
+// ── Load token ──
+document.getElementById('loadTokenBtn').addEventListener('click', loadToken);
+document.getElementById('mintAddress').addEventListener('keydown', e => { if (e.key === 'Enter') loadToken(); });
+
+async function loadToken() {
+  const mintStr = document.getElementById('mintAddress').value.trim();
+  if (!mintStr) { showStatus('Enter a mint address', 'error'); return; }
+
+  let mintPubkey;
+  try { mintPubkey = new PublicKey(mintStr); } catch { showStatus('Invalid mint address', 'error'); return; }
+
+  showStatus('Loading bonding curve...', 'info');
+
+  try {
+    const [bcPubkey] = deriveBondingCurve(mintPubkey);
+    const acctInfo = await connection.getAccountInfo(bcPubkey);
+    if (!acctInfo?.data) { showStatus('Bonding curve not found — is this a pump.fun token?', 'error'); return; }
+
+    const data = new Uint8Array(acctInfo.data);
+    bondingCurveState = parseBondingCurve(data, mintPubkey, bcPubkey);
+
+    if (bondingCurveState.complete) {
+      document.getElementById('completeText').textContent = 'MIGRATED — trade on Raydium';
+    }
+
+    // Calculate price and MC
+    const price = Number(bondingCurveState.virtualSolReserves) / Number(bondingCurveState.virtualTokenReserves);
+    const mcLamports = (bondingCurveState.virtualSolReserves * bondingCurveState.tokenTotalSupply) / bondingCurveState.virtualTokenReserves;
+    const mcSol = Number(mcLamports) / 1e9;
+
+    // Progress: how much of the 85 SOL target has been filled
+    const realSol = Number(bondingCurveState.realSolReserves) / 1e9;
+    const progress = Math.min(100, (realSol / 85) * 100);
+
+    document.getElementById('tokenName').textContent = mintStr.slice(0, 6) + '...' + mintStr.slice(-4);
+    document.getElementById('tokenTicker').textContent = 'Pump.fun Token';
+    document.getElementById('tokenPrice').textContent = (price * 1e3).toFixed(6) + ' mSOL';
+    document.getElementById('tokenMC').textContent = mcSol.toFixed(2) + ' SOL';
+    document.getElementById('progressBar').style.width = progress.toFixed(1) + '%';
+    document.getElementById('progressText').textContent = progress.toFixed(1) + '% bonded (' + realSol.toFixed(2) + ' / 85 SOL)';
+
+    document.getElementById('tokenInfo').classList.remove('hidden');
+    document.getElementById('tradePanel').classList.remove('hidden');
+    hideStatus();
+
+    // Load user token balance if wallet connected
+    if (walletPubkey) await loadBalances();
+  } catch (err) {
+    showStatus('Error: ' + err.message, 'error');
+  }
+}
+
+// ── Wallet connect ──
+document.getElementById('connectWalletBtn').addEventListener('click', async () => {
+  if (walletPubkey) { walletPubkey = null; provider = null; document.getElementById('walletBtnText').textContent = 'Connect Wallet'; updateButtons(); return; }
+  try {
+    provider = window?.phantom?.solana || window?.solana;
+    if (!provider?.isPhantom) { showStatus('Install Phantom wallet', 'error'); window.open('https://phantom.app/', '_blank'); return; }
+    const resp = await provider.connect();
+    walletPubkey = resp.publicKey;
+    document.getElementById('walletBtnText').textContent = walletPubkey.toString().slice(0, 4) + '...' + walletPubkey.toString().slice(-4);
+    updateButtons();
+    if (bondingCurveState) await loadBalances();
+  } catch (err) { showStatus('Wallet error: ' + err.message, 'error'); }
+});
+
+async function loadBalances() {
+  if (!walletPubkey) return;
+  // SOL balance
+  const bal = await connection.getBalance(walletPubkey);
+  document.getElementById('solBalance').textContent = 'Balance: ' + (bal / 1e9).toFixed(4) + ' SOL';
+
+  // Token balance (Token2022 ATA)
+  if (bondingCurveState) {
+    const ata = deriveATA(walletPubkey, bondingCurveState.mint);
+    userTokenAccount = ata;
+    try {
+      const tokenAcct = await connection.getTokenAccountBalance(ata);
+      userTokenBalance = BigInt(tokenAcct.value.amount);
+      document.getElementById('tokenBalance').textContent = 'Balance: ' + Number(userTokenBalance / 1000000n).toLocaleString() + ' tokens (click=max)';
+    } catch {
+      userTokenBalance = 0n;
+      userTokenAccount = null;
+      document.getElementById('tokenBalance').textContent = 'Balance: 0';
+    }
+  }
+}
+
+function updateButtons() {
+  document.getElementById('buyBtn').disabled = !walletPubkey;
+  document.getElementById('buyBtn').textContent = walletPubkey ? 'Buy' : 'Connect wallet to buy';
+  document.getElementById('sellBtn').disabled = !walletPubkey;
+  document.getElementById('sellBtn').textContent = walletPubkey ? 'Sell' : 'Connect wallet to sell';
+}
+
+// ── Tab switching ──
+window.switchTab = function(tab) {
+  document.getElementById('buyPanel').classList.toggle('hidden', tab !== 'buy');
+  document.getElementById('sellPanel').classList.toggle('hidden', tab !== 'sell');
+  document.getElementById('tabBuy').className = 'flex-1 py-2.5 text-sm font-semibold transition-colors ' + (tab === 'buy' ? 'tab-active' : 'tab-inactive');
+  document.getElementById('tabSell').className = 'flex-1 py-2.5 text-sm font-semibold transition-colors ' + (tab === 'sell' ? 'tab-active' : 'tab-inactive');
+};
+
+// ── Sell helpers ──
+window.sellPercent = function(pct) {
+  const amount = userTokenBalance * BigInt(pct) / 100n;
+  document.getElementById('sellAmount').value = (Number(amount) / 1e6).toString();
+};
+window.sellMax = function() { window.sellPercent(100); };
+
+// ── BUY ──
+document.getElementById('buyBtn').addEventListener('click', async () => {
+  if (!walletPubkey || !bondingCurveState) return;
+  const solAmount = parseFloat(document.getElementById('buyAmount').value);
+  if (!solAmount || solAmount <= 0) { showStatus('Enter SOL amount', 'error'); return; }
+  if (bondingCurveState.complete) { showStatus('Token migrated — trade on Raydium', 'error'); return; }
+
+  const slippagePct = parseInt(document.getElementById('buySlippage').value) || 10;
+  const solLamports = BigInt(Math.round(solAmount * 1e9));
+
+  // Calculate min tokens out with slippage
+  const expectedTokens = tokensForSol(solLamports, bondingCurveState.virtualSolReserves, bondingCurveState.virtualTokenReserves);
+  const minTokensOut = expectedTokens - (expectedTokens * BigInt(slippagePct * 100) / 10000n);
+
+  document.getElementById('buyBtn').textContent = 'Building tx...';
+  document.getElementById('buyBtn').disabled = true;
+
+  try {
+    const mint = bondingCurveState.mint;
+    const bc = bondingCurveState.bondingCurve;
+    const bcVault = deriveBondingCurveVault(bc, mint);
+    const [creatorVault] = deriveCreatorVault(bondingCurveState.creator);
+    const [globalVol] = deriveGlobalVolume();
+    const [userVol] = deriveUserVolume(walletPubkey);
+    const [bcV2] = deriveBondingCurveV2(mint);
+
+    // Create user token account (ATA via Token2022)
+    const userATA = deriveATA(walletPubkey, mint);
+    const instructions = [];
+
+    // Compute budget
+    instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 100000 }));
+    instructions.push(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
+
+    // Create ATA if it doesn't exist
+    const ataInfo = await connection.getAccountInfo(userATA);
+    if (!ataInfo) {
+      instructions.push(new TransactionInstruction({
+        programId: ASSOC_TOKEN,
+        keys: [
+          { pubkey: walletPubkey, isSigner: true, isWritable: true },
+          { pubkey: userATA, isSigner: false, isWritable: true },
+          { pubkey: walletPubkey, isSigner: false, isWritable: false },
+          { pubkey: mint, isSigner: false, isWritable: false },
+          { pubkey: SYS_PROGRAM, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_2022, isSigner: false, isWritable: false },
+        ],
+        data: new Uint8Array([]),
+      }));
+    }
+
+    // buy_exact_sol_in instruction (17 accounts)
+    instructions.push(new TransactionInstruction({
+      programId: PUMP_PROGRAM,
+      keys: [
+        { pubkey: PUMP_GLOBAL, isSigner: false, isWritable: false },
+        { pubkey: PUMP_FEE_RECIPIENT, isSigner: false, isWritable: true },
+        { pubkey: mint, isSigner: false, isWritable: false },
+        { pubkey: bc, isSigner: false, isWritable: true },
+        { pubkey: bcVault, isSigner: false, isWritable: true },
+        { pubkey: userATA, isSigner: false, isWritable: true },
+        { pubkey: walletPubkey, isSigner: true, isWritable: true },
+        { pubkey: SYS_PROGRAM, isSigner: false, isWritable: false },
+        { pubkey: TOKEN_2022, isSigner: false, isWritable: false },
+        { pubkey: creatorVault, isSigner: false, isWritable: true },
+        { pubkey: PUMP_EVENT_AUTH, isSigner: false, isWritable: false },
+        { pubkey: PUMP_PROGRAM, isSigner: false, isWritable: false },
+        { pubkey: globalVol, isSigner: false, isWritable: false },
+        { pubkey: userVol, isSigner: false, isWritable: true },
+        { pubkey: PUMP_FEE_CONFIG, isSigner: false, isWritable: false },
+        { pubkey: PUMP_FEE_PROGRAM, isSigner: false, isWritable: false },
+        { pubkey: bcV2, isSigner: false, isWritable: false },
+      ],
+      data: encodeBuyExactSolIn(solLamports, minTokensOut),
+    }));
+
+    // Build versioned transaction
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    const msg = new TransactionMessage({
+      payerKey: walletPubkey,
+      recentBlockhash: blockhash,
+      instructions,
+    }).compileToV0Message();
+    const tx = new VersionedTransaction(msg);
+
+    document.getElementById('buyBtn').textContent = 'Approve in Phantom...';
+    const signed = await provider.signTransaction(tx);
+    document.getElementById('buyBtn').textContent = 'Sending...';
+
+    const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, maxRetries: 3 });
+    showStatus('Buy sent! TX: ' + sig, 'success');
+    document.getElementById('buyBtn').textContent = 'Confirming...';
+
+    await connection.confirmTransaction(sig, 'confirmed');
+    showStatus('Buy confirmed! TX: ' + sig, 'success');
+    await loadBalances();
+    await loadToken(); // refresh curve state
+  } catch (err) {
+    showStatus('Buy failed: ' + err.message, 'error');
+  } finally {
+    document.getElementById('buyBtn').textContent = 'Buy';
+    document.getElementById('buyBtn').disabled = false;
+  }
+});
+
+// ── SELL ──
+document.getElementById('sellBtn').addEventListener('click', async () => {
+  if (!walletPubkey || !bondingCurveState) return;
+  const tokenAmountInput = parseFloat(document.getElementById('sellAmount').value);
+  if (!tokenAmountInput || tokenAmountInput <= 0) { showStatus('Enter token amount', 'error'); return; }
+
+  const tokenAmount = BigInt(Math.round(tokenAmountInput * 1e6)); // 6 decimals
+  if (tokenAmount > userTokenBalance) { showStatus('Insufficient token balance', 'error'); return; }
+
+  const slippagePct = parseInt(document.getElementById('sellSlippage').value) || 10;
+  const expectedSol = solForTokens(tokenAmount, bondingCurveState.virtualSolReserves, bondingCurveState.virtualTokenReserves);
+  const minSolOut = expectedSol - (expectedSol * BigInt(slippagePct * 100) / 10000n);
+
+  const sellingAll = tokenAmount >= userTokenBalance;
+
+  document.getElementById('sellBtn').textContent = 'Building tx...';
+  document.getElementById('sellBtn').disabled = true;
+
+  try {
+    const mint = bondingCurveState.mint;
+    const bc = bondingCurveState.bondingCurve;
+    const bcVault = deriveBondingCurveVault(bc, mint);
+    const [creatorVault] = deriveCreatorVault(bondingCurveState.creator);
+    const [bcV2] = deriveBondingCurveV2(mint);
+    const [userVol] = deriveUserVolume(walletPubkey);
+
+    const userATA = deriveATA(walletPubkey, mint);
+    const instructions = [];
+
+    instructions.push(ComputeBudgetProgram.setComputeUnitLimit({ units: 100000 }));
+    instructions.push(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100000 }));
+
+    // Sell instruction (14-16 accounts)
+    const sellKeys = [
+      { pubkey: PUMP_GLOBAL, isSigner: false, isWritable: false },
+      { pubkey: PUMP_FEE_RECIPIENT, isSigner: false, isWritable: true },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: bc, isSigner: false, isWritable: true },
+      { pubkey: bcVault, isSigner: false, isWritable: true },
+      { pubkey: userATA, isSigner: false, isWritable: true },
+      { pubkey: walletPubkey, isSigner: true, isWritable: true },
+      { pubkey: SYS_PROGRAM, isSigner: false, isWritable: false },
+      { pubkey: creatorVault, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_2022, isSigner: false, isWritable: false },
+      { pubkey: PUMP_EVENT_AUTH, isSigner: false, isWritable: false },
+      { pubkey: PUMP_PROGRAM, isSigner: false, isWritable: false },
+      { pubkey: PUMP_FEE_CONFIG, isSigner: false, isWritable: false },
+      { pubkey: PUMP_FEE_PROGRAM, isSigner: false, isWritable: false },
+    ];
+
+    // Cashback coins need user_volume_accumulator before bondingCurveV2
+    if (bondingCurveState.isCashbackCoin) {
+      sellKeys.push({ pubkey: userVol, isSigner: false, isWritable: true });
+    }
+    sellKeys.push({ pubkey: bcV2, isSigner: false, isWritable: false });
+
+    instructions.push(new TransactionInstruction({
+      programId: PUMP_PROGRAM,
+      keys: sellKeys,
+      data: encodeSell(tokenAmount, minSolOut),
+    }));
+
+    // Close token account if selling 100% (reclaim rent)
+    if (sellingAll) {
+      instructions.push(createCloseAccountIx(userATA, walletPubkey, walletPubkey));
+    }
+
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    const msg = new TransactionMessage({
+      payerKey: walletPubkey,
+      recentBlockhash: blockhash,
+      instructions,
+    }).compileToV0Message();
+    const tx = new VersionedTransaction(msg);
+
+    document.getElementById('sellBtn').textContent = 'Approve in Phantom...';
+    const signed = await provider.signTransaction(tx);
+    document.getElementById('sellBtn').textContent = 'Sending...';
+
+    const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, maxRetries: 3 });
+    showStatus('Sell sent! TX: ' + sig, 'success');
+    document.getElementById('sellBtn').textContent = 'Confirming...';
+
+    await connection.confirmTransaction(sig, 'confirmed');
+    showStatus('Sell confirmed! TX: ' + sig, 'success');
+    await loadBalances();
+    await loadToken();
+  } catch (err) {
+    showStatus('Sell failed: ' + err.message, 'error');
+  } finally {
+    document.getElementById('sellBtn').textContent = 'Sell';
+    document.getElementById('sellBtn').disabled = false;
+  }
+});
+
+// ── Estimate updates ──
+document.getElementById('buyAmount').addEventListener('input', () => {
+  if (!bondingCurveState) return;
+  const sol = parseFloat(document.getElementById('buyAmount').value) || 0;
+  const lamports = BigInt(Math.round(sol * 1e9));
+  const tokens = tokensForSol(lamports, bondingCurveState.virtualSolReserves, bondingCurveState.virtualTokenReserves);
+  document.getElementById('buyEstimate').textContent = sol > 0 ? '≈ ' + (Number(tokens) / 1e6).toLocaleString(undefined, {maximumFractionDigits: 2}) + ' tokens' : '';
+});
+
+document.getElementById('sellAmount').addEventListener('input', () => {
+  if (!bondingCurveState) return;
+  const tokens = parseFloat(document.getElementById('sellAmount').value) || 0;
+  const tokenBig = BigInt(Math.round(tokens * 1e6));
+  const sol = solForTokens(tokenBig, bondingCurveState.virtualSolReserves, bondingCurveState.virtualTokenReserves);
+  document.getElementById('sellEstimate').textContent = tokens > 0 ? '≈ ' + (Number(sol) / 1e9).toFixed(6) + ' SOL' : '';
+});
+
+// ── Helpers ──
+function showStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.classList.remove('hidden');
+  el.textContent = msg;
+  el.className = 'text-center text-sm p-3 border border-border mt-4 break-all ' +
+    (type === 'error' ? 'text-red-400 bg-red-400/10' : type === 'info' ? 'text-blue-400 bg-blue-400/10' : 'text-green-400 bg-green-400/10');
+  if (type !== 'info') setTimeout(() => el.classList.add('hidden'), 12000);
+}
+function hideStatus() { document.getElementById('statusMsg').classList.add('hidden'); }
+
+// Check URL params for mint
+const params = new URLSearchParams(window.location.search);
+if (params.get('mint')) {
+  document.getElementById('mintAddress').value = params.get('mint');
+  loadToken();
+}
+</script>
+</body></html>
