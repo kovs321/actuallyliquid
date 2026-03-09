@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model LaunchedToken {
+  id          String   @id @default(cuid())
+  name        String
+  symbol      String
+  description String?
+  imageUrl    String?
+  mintAddress String?  @unique
+  txSignature String?
+  twitter     String?
+  telegram    String?
+  website     String?
+  userWallet  String
+  pumpUrl     String?
+  createdAt   DateTime @default(now())
+
+  @@map("launched_tokens")
+}

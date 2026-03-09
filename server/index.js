@@ -4,10 +4,12 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PrismaClient } from '@prisma/client';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
+const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
@@ -47,18 +49,14 @@ app.post('/api/create-wallet', async (req, res) => {
     if (!ppResp.ok) throw new Error('PumpPortal wallet creation failed: ' + ppResp.statusText);
     const data = await ppResp.json();
 
-    // data = { walletPublicKey, privateKey, apiKey }
     const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
-    // Store API key in memory only — never persisted, never sent to frontend
     sessions.set(sessionId, {
       apiKey: data.apiKey,
       walletPublicKey: data.walletPublicKey,
       createdAt: Date.now(),
     });
 
-    // Return wallet info to user (they see & save private key)
-    // API key is NOT returned — stays server-side only
     res.json({
       sessionId,
       walletPublicKey: data.walletPublicKey,
@@ -87,7 +85,7 @@ app.post('/api/upload-image', upload.single('file'), (req, res) => {
 // 3. Launch token via PumpPortal trade API
 // ──────────────────────────────────────────────
 app.post('/api/launch', async (req, res) => {
-  const { sessionId, name, symbol, description, twitter, telegram, website, devBuyAmount, imageFilename } = req.body;
+  const { sessionId, name, symbol, description, twitter, telegram, website, devBuyAmount, imageFilename, userWallet } = req.body;
 
   if (!sessionId || !name || !symbol) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -110,6 +108,7 @@ app.post('/api/launch', async (req, res) => {
     formData.append('showName', 'true');
 
     // Attach image file if provided
+    let imageUrl = null;
     if (imageFilename) {
       const imgPath = path.join(uploadsDir, imageFilename);
       if (fs.existsSync(imgPath)) {
@@ -118,6 +117,8 @@ app.post('/api/launch', async (req, res) => {
         const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
         const blob = new Blob([imgBuffer], { type: mimeMap[ext] || 'image/png' });
         formData.append('file', blob, imageFilename);
+        const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+        imageUrl = `${baseUrl}/uploads/${imageFilename}`;
       }
     }
 
@@ -125,9 +126,12 @@ app.post('/api/launch', async (req, res) => {
     if (!ipfsResp.ok) throw new Error('IPFS upload failed: ' + ipfsResp.statusText);
     const ipfsData = await ipfsResp.json();
 
-    // Step B: Generate a mint keypair (random)
-    // PumpPortal accepts mint as base58-encoded secret key
-    // We use the crypto API to generate a random Ed25519 keypair
+    // Grab IPFS image URL if available
+    if (ipfsData.metadata?.image) {
+      imageUrl = ipfsData.metadata.image;
+    }
+
+    // Step B: Generate a mint keypair
     const { Keypair } = await import('@solana/web3.js');
     const mintKeypair = Keypair.generate();
 
@@ -166,18 +170,63 @@ app.post('/api/launch', async (req, res) => {
     }
 
     const tradeData = await tradeResp.json();
+    const txSignature = tradeData.signature || tradeData.tx;
+    const pumpUrl = `https://pump.fun/coin/${mintAddress}`;
 
-    // Clean up session — API key is gone forever
+    // Clean up session
     sessions.delete(sessionId);
+
+    // ── Save to database ──
+    await prisma.launchedToken.create({
+      data: {
+        name,
+        symbol,
+        description: description || null,
+        imageUrl,
+        mintAddress,
+        txSignature,
+        twitter: twitter || null,
+        telegram: telegram || null,
+        website: website || null,
+        userWallet: userWallet || session.walletPublicKey,
+        pumpUrl,
+      },
+    });
 
     res.json({
       success: true,
       mintAddress,
-      txSignature: tradeData.signature || tradeData.tx,
-      pumpUrl: `https://pump.fun/coin/${mintAddress}`,
+      txSignature,
+      pumpUrl,
     });
   } catch (err) {
     console.error('launch error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ──────────────────────────────────────────────
+// 4. Get all launched tokens (for homepage)
+// ──────────────────────────────────────────────
+app.get('/api/tokens', async (req, res) => {
+  try {
+    const tokens = await prisma.launchedToken.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        name: true,
+        symbol: true,
+        description: true,
+        imageUrl: true,
+        mintAddress: true,
+        pumpUrl: true,
+        userWallet: true,
+        createdAt: true,
+      },
+    });
+    res.json({ tokens });
+  } catch (err) {
+    console.error('tokens error:', err);
     res.status(500).json({ error: err.message });
   }
 });
