@@ -7,4 +7,4 @@ COPY . .
 RUN npx prisma generate
 RUN mkdir -p uploads
 EXPOSE 3001
-CMD npx prisma db push --skip-generate && node index.js
+CMD npx prisma db push --accept-data-loss --skip-generate && node index.js
