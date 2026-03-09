@@ -59,9 +59,6 @@
             <span>Home</span>
             <span class="absolute inset-x-0 bottom-0 h-0.5 bg-violet-500"></span>
           </a>
-          <a class="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground" href="/trade">
-            <span>Trade</span>
-          </a>
         </nav>
       </div>
       <div class="hidden sm:flex items-center gap-2 shrink-0">
@@ -90,9 +87,9 @@
       <div class="flex flex-col h-full">
         <!-- Mobile tabs -->
         <div class="lg:hidden flex border border-border bg-card mb-4 shrink-0">
-          <button class="flex-1 py-2 text-xs font-medium transition-colors bg-muted text-foreground" onclick="switchColumn('new')">New</button>
-          <button class="flex-1 py-2 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground" onclick="switchColumn('runners')">Runners</button>
-          <button class="flex-1 py-2 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground" onclick="switchColumn('migrated')">Migrated</button>
+          <button class="flex-1 py-2 text-xs font-medium transition-colors bg-muted text-foreground" onclick="switchColumn('new')">New <span id="newCountMob" class="text-[10px] opacity-60"></span></button>
+          <button class="flex-1 py-2 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground" onclick="switchColumn('runners')">Runners <span id="runnersCountMob" class="text-[10px] opacity-60"></span></button>
+          <button class="flex-1 py-2 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground" onclick="switchColumn('migrated')">Migrated <span id="migratedCountMob" class="text-[10px] opacity-60"></span></button>
         </div>
 
         <!-- Mobile single column -->
@@ -116,37 +113,36 @@
         <div class="hidden lg:grid lg:grid-cols-3 gap-4 h-full">
           <div class="flex flex-col bg-card border border-border h-full min-h-0 overflow-hidden">
             <div class="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
-              <span class="text-xs font-bold text-foreground">New Coins</span>
+              <span class="text-xs font-bold text-foreground">New Coins <span id="newCount" class="text-[10px] text-muted-foreground font-normal"></span></span>
             </div>
             <div class="flex-1 overflow-y-auto min-h-0">
-              <div class="p-2" id="newCoinsCol">
+              <div class="p-2 flex flex-col gap-1" id="newCoinsCol">
                 <div class="flex flex-col items-center justify-center border border-dashed border-border gap-2 py-8">
-                  <p class="text-zinc-400 font-medium mb-1 text-xs">No new coins yet</p>
-                  <a href="/create" class="text-violet-400 text-xs hover:underline">Be the first to create one</a>
+                  <p class="text-zinc-400 font-medium mb-1 text-xs">Loading...</p>
                 </div>
               </div>
             </div>
           </div>
           <div class="flex flex-col bg-card border border-border h-full min-h-0 overflow-hidden">
             <div class="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
-              <span class="text-xs font-bold text-foreground">Runners</span>
+              <span class="text-xs font-bold text-foreground">Runners <span id="runnersCount" class="text-[10px] text-muted-foreground font-normal"></span></span>
             </div>
             <div class="flex-1 overflow-y-auto min-h-0">
-              <div class="p-2">
+              <div class="p-2 flex flex-col gap-1" id="runnersCol">
                 <div class="flex flex-col items-center justify-center border border-dashed border-border gap-2 py-8">
-                  <p class="text-zinc-400 font-medium mb-1 text-xs">No runners yet</p>
+                  <p class="text-zinc-400 font-medium mb-1 text-xs">Loading...</p>
                 </div>
               </div>
             </div>
           </div>
           <div class="flex flex-col bg-card border border-border h-full min-h-0 overflow-hidden">
             <div class="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
-              <span class="text-xs font-bold text-foreground">Migrated</span>
+              <span class="text-xs font-bold text-foreground">Migrated <span id="migratedCount" class="text-[10px] text-muted-foreground font-normal"></span></span>
             </div>
             <div class="flex-1 overflow-y-auto min-h-0">
-              <div class="p-2">
+              <div class="p-2 flex flex-col gap-1" id="migratedCol">
                 <div class="flex flex-col items-center justify-center border border-dashed border-border gap-2 py-8">
-                  <p class="text-zinc-400 font-medium mb-1 text-xs">No migrated coins yet</p>
+                  <p class="text-zinc-400 font-medium mb-1 text-xs">Loading...</p>
                 </div>
               </div>
             </div>
@@ -250,8 +246,17 @@ if (provider) {
 // Auto-reconnect on load
 tryReconnect();
 
-// ── Fetch and display launched tokens ──
+// ── Fetch and display launched tokens with bonding curve categorization ──
 const API_BASE = 'https://server-production-9526.up.railway.app';
+const HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=a12a538e-a61e-40fc-8de8-113e37aeb005';
+const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+
+// Runner threshold: > 10 SOL real reserves
+const RUNNER_SOL_THRESHOLD = 10;
+
+// Categorized tokens cache
+let categorized = { new: [], runners: [], migrated: [] };
+let currentMobileTab = 'new';
 
 function renderTokenCard(token) {
   const short = token.mintAddress ? token.mintAddress.slice(0, 6) + '...' + token.mintAddress.slice(-4) : '';
@@ -260,18 +265,27 @@ function renderTokenCard(token) {
     : '';
   const fallback = `<div class="${token.imageUrl ? 'hidden' : 'flex'} items-center justify-center w-full h-full text-muted-foreground text-xs font-bold">${token.symbol?.slice(0,3) || '?'}</div>`;
   const ago = timeAgo(new Date(token.createdAt));
+  const mcLabel = token.mcSol != null ? `<span class="text-[10px] font-semibold ${token.mcSol > 50 ? 'text-green-400' : 'text-muted-foreground'}">${token.mcSol.toFixed(1)} SOL</span>` : '';
+  const progress = token.progressPct != null ? `
+    <div class="flex gap-0.5 h-1 mt-1">
+      <div class="flex-1 relative overflow-hidden bg-slate-200/10"><div class="absolute inset-y-0 left-0 bg-fuchsia-400 transition-all" style="width:${token.progressPct.toFixed(1)}%"></div></div>
+    </div>` : '';
   return `
-    <a href="/trade?mint=${token.mintAddress}" class="flex gap-3 p-2 border border-border hover:border-violet-500/50 transition-colors cursor-pointer">
+    <a href="/token?mint=${token.mintAddress}" class="flex gap-3 p-2 border border-border hover:border-violet-500/50 transition-colors cursor-pointer">
       <div class="w-12 h-12 shrink-0 bg-muted border border-border overflow-hidden">${img}${fallback}</div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-semibold text-foreground truncate">${token.name}</span>
-          <span class="text-xs text-muted-foreground">$${token.symbol}</span>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-sm font-semibold text-foreground truncate">${token.name}</span>
+            <span class="text-xs text-muted-foreground">$${token.symbol}</span>
+          </div>
+          ${mcLabel}
         </div>
         <div class="flex items-center gap-2 mt-0.5">
           <span class="text-[10px] text-muted-foreground font-mono">${short}</span>
           <span class="text-[10px] text-muted-foreground">${ago}</span>
         </div>
+        ${progress}
       </div>
     </a>`;
 }
@@ -291,30 +305,152 @@ function renderEmpty(msg, showCreate) {
   </div>`;
 }
 
+function renderColumn(el, tokens, emptyMsg, showCreate) {
+  if (tokens.length > 0) {
+    el.innerHTML = tokens.map(renderTokenCard).join('');
+  } else {
+    el.innerHTML = renderEmpty(emptyMsg, showCreate);
+  }
+}
+
+// Derive bonding curve PDA (same as in token.html)
+function deriveBondingCurvePDA(mintBase58) {
+  // We'll use Helius getMultipleAccounts with precomputed PDAs
+  // For now, use the Helius DAS API approach instead
+  return null;
+}
+
+// Fetch bonding curve data for all tokens via RPC
+async function fetchBondingCurves(tokens) {
+  if (tokens.length === 0) return [];
+
+  // Use getProgramAccounts would be slow. Instead, derive PDAs and batch fetch.
+  // We need to compute PDAs client-side. Let's use a simpler approach:
+  // fetch each token's bonding curve account individually via getAccountInfo
+  // but batch them with getMultipleAccounts
+
+  // Import PublicKey from solana/web3.js via ESM
+  const { PublicKey } = await import('https://esm.sh/@solana/web3.js@1.95.8');
+  const PUMP = new PublicKey(PUMP_PROGRAM);
+
+  // Derive bonding curve PDAs for all tokens
+  const pdas = tokens.map(t => {
+    try {
+      const mint = new PublicKey(t.mintAddress);
+      const [bc] = PublicKey.findProgramAddressSync(
+        [new TextEncoder().encode('bonding-curve'), mint.toBytes()],
+        PUMP
+      );
+      return bc.toBase58();
+    } catch { return null; }
+  });
+
+  // Batch fetch via getMultipleAccounts (max 100 per call)
+  const results = [];
+  for (let i = 0; i < pdas.length; i += 100) {
+    const batch = pdas.slice(i, i + 100).filter(Boolean);
+    if (batch.length === 0) { results.push(...new Array(Math.min(100, pdas.length - i)).fill(null)); continue; }
+    try {
+      const resp = await fetch(HELIUS_RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', id: 1,
+          method: 'getMultipleAccounts',
+          params: [batch, { encoding: 'base64' }],
+        }),
+      });
+      const data = await resp.json();
+      const accounts = data?.result?.value || [];
+      results.push(...accounts);
+    } catch {
+      results.push(...new Array(batch.length).fill(null));
+    }
+  }
+
+  // Parse bonding curve data
+  return tokens.map((token, idx) => {
+    const acct = results[idx];
+    if (!acct?.data?.[0]) return { ...token, category: 'new', mcSol: null, progressPct: null };
+
+    try {
+      const buf = Uint8Array.from(atob(acct.data[0]), c => c.charCodeAt(0));
+      const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+      const off = 8; // skip discriminator
+      const virtualTokenReserves = view.getBigUint64(off, true);
+      const virtualSolReserves = view.getBigUint64(off + 8, true);
+      const realTokenReserves = view.getBigUint64(off + 16, true);
+      const realSolReserves = view.getBigUint64(off + 24, true);
+      const tokenTotalSupply = view.getBigUint64(off + 32, true);
+      const complete = buf[off + 40] === 1;
+
+      const realSol = Number(realSolReserves) / 1e9;
+      const mcLamports = (virtualSolReserves * tokenTotalSupply) / virtualTokenReserves;
+      const mcSol = Number(mcLamports) / 1e9;
+      const progressPct = Math.min(100, (realSol / 85) * 100);
+
+      let category;
+      if (complete) {
+        category = 'migrated';
+      } else if (realSol >= RUNNER_SOL_THRESHOLD) {
+        category = 'runners';
+      } else {
+        category = 'new';
+      }
+
+      return { ...token, category, mcSol, progressPct, realSol };
+    } catch {
+      return { ...token, category: 'new', mcSol: null, progressPct: null };
+    }
+  });
+}
+
 async function loadTokens() {
   try {
     const resp = await fetch(API_BASE + '/api/tokens');
     if (!resp.ok) return;
     const { tokens } = await resp.json();
 
-    // New Coins column (desktop)
-    const newCol = document.getElementById('newCoinsCol');
-    if (tokens.length > 0) {
-      newCol.innerHTML = tokens.map(renderTokenCard).join('');
-    } else {
-      newCol.innerHTML = renderEmpty('No new coins yet', true);
+    // Fetch bonding curve data and categorize
+    const enriched = await fetchBondingCurves(tokens);
+
+    categorized = { new: [], runners: [], migrated: [] };
+    for (const t of enriched) {
+      categorized[t.category].push(t);
     }
 
-    // Mobile column
-    const mobCol = document.getElementById('mobileColContent');
-    if (tokens.length > 0) {
-      mobCol.innerHTML = tokens.map(renderTokenCard).join('');
-    } else {
-      mobCol.innerHTML = renderEmpty('No new coins yet', true);
-    }
+    // Sort: runners and migrated by MC desc, new by createdAt desc (already sorted)
+    categorized.runners.sort((a, b) => (b.mcSol || 0) - (a.mcSol || 0));
+    categorized.migrated.sort((a, b) => (b.mcSol || 0) - (a.mcSol || 0));
+
+    // Update desktop columns
+    renderColumn(document.getElementById('newCoinsCol'), categorized.new, 'No new coins yet', true);
+    renderColumn(document.getElementById('runnersCol'), categorized.runners, 'No runners yet', false);
+    renderColumn(document.getElementById('migratedCol'), categorized.migrated, 'No migrated coins yet', false);
+
+    // Update column counts
+    const nc = categorized.new.length, rc = categorized.runners.length, mc = categorized.migrated.length;
+    document.getElementById('newCount').textContent = `(${nc})`;
+    document.getElementById('runnersCount').textContent = `(${rc})`;
+    document.getElementById('migratedCount').textContent = `(${mc})`;
+    const ncm = document.getElementById('newCountMob'); if (ncm) ncm.textContent = `(${nc})`;
+    const rcm = document.getElementById('runnersCountMob'); if (rcm) rcm.textContent = `(${rc})`;
+    const mcm = document.getElementById('migratedCountMob'); if (mcm) mcm.textContent = `(${mc})`;
+
+    // Update mobile
+    updateMobileColumn();
   } catch (err) {
     console.error('Failed to load tokens:', err);
   }
+}
+
+function updateMobileColumn() {
+  const col = currentMobileTab;
+  const mobCol = document.getElementById('mobileColContent');
+  const titles = { new: 'New', runners: 'Runners', migrated: 'Migrated' };
+  document.getElementById('mobileColTitle').textContent = titles[col];
+  const msgs = { new: 'No new coins yet', runners: 'No runners yet', migrated: 'No migrated coins yet' };
+  renderColumn(mobCol, categorized[col], msgs[col], col === 'new');
 }
 
 // Load tokens on page load and refresh every 30 seconds
@@ -323,18 +459,12 @@ setInterval(loadTokens, 30000);
 
 // Mobile column switcher
 function switchColumn(col) {
+  currentMobileTab = col;
   const btns = document.querySelectorAll('.lg\\:hidden.flex.border button');
   btns.forEach(b => { b.className = 'flex-1 py-2 text-xs font-medium transition-colors text-muted-foreground hover:text-foreground'; });
   const idx = col === 'new' ? 0 : col === 'runners' ? 1 : 2;
   btns[idx].className = 'flex-1 py-2 text-xs font-medium transition-colors bg-muted text-foreground';
-  const titles = { new: 'New', runners: 'Runners', migrated: 'Migrated' };
-  document.getElementById('mobileColTitle').textContent = titles[col];
-  if (col === 'new') {
-    loadTokens();
-  } else {
-    const msgs = { runners: 'No runners yet', migrated: 'No migrated coins yet' };
-    document.getElementById('mobileColContent').innerHTML = renderEmpty(msgs[col], false);
-  }
+  updateMobileColumn();
 }
 </script>
 </body></html>
