@@ -1,7 +1,39 @@
 <html lang="en" class="dark"><head>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https: http:; connect-src 'self' https: wss:; frame-src 'self'; object-src 'none'; base-uri 'self'">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+              pixel: ['Silkscreen', 'monospace'],
+            },
+            colors: {
+              border: 'hsl(215, 20%, 17%)',
+              background: 'hsl(220, 25%, 8%)',
+              'background-header': 'hsl(220, 25%, 10%)',
+              foreground: 'hsl(210, 40%, 98%)',
+              card: 'hsl(220, 25%, 10%)',
+              muted: { DEFAULT: 'hsl(215, 20%, 15%)', foreground: 'hsl(215, 20%, 55%)' },
+              violet: { 400: '#a78bfa', 500: '#8b5cf6' },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .btn-primary { background: #8b5cf6; color: white; border-radius: 4px; }
+      .btn-primary:hover { background: #7c3aed; }
+      .btn-accent { background: #06b6d4; color: white; border-radius: 4px; }
+      .btn-accent:hover { background: #0891b2; }
+      .font-pixel { font-family: 'Silkscreen', monospace; }
+      .crt-scanlines { background-color: hsl(220, 25%, 8%); }
+      .fixed-height-page { height: 100%; }
+    </style>
 
     <title>Coins | Liquid.af</title>
     <meta name="description" content="Launch &amp; Trade with USDC">
