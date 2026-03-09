@@ -1,0 +1,436 @@
+<html lang="en" class="dark"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+              pixel: ['Silkscreen', 'monospace'],
+            },
+            colors: {
+              border: 'hsl(215, 20%, 17%)',
+              background: 'hsl(220, 25%, 8%)',
+              'background-header': 'hsl(220, 25%, 10%)',
+              foreground: 'hsl(210, 40%, 98%)',
+              card: 'hsl(220, 25%, 10%)',
+              muted: { DEFAULT: 'hsl(215, 20%, 15%)', foreground: 'hsl(215, 20%, 55%)' },
+              violet: { 400: '#a78bfa', 500: '#8b5cf6' },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .btn-primary { background: #8b5cf6; color: white; border-radius: 4px; }
+      .btn-primary:hover { background: #7c3aed; }
+      .btn-accent { background: #06b6d4; color: white; border-radius: 4px; }
+      .btn-accent:hover { background: #0891b2; }
+      .font-pixel { font-family: 'Silkscreen', monospace; }
+      .crt-scanlines { background-color: hsl(220, 25%, 8%); }
+      .scrollable-page { height: 100%; overflow-y: auto; }
+    </style>
+    <title>Create | actuallyliquid.fun</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="crt-scanlines h-screen bg-background text-foreground flex flex-col overflow-hidden">
+  <!-- Header -->
+  <header class="z-50 w-full bg-background-header shrink-0">
+    <div class="flex items-center justify-between px-4 sm:px-6 lg:px-12 xl:px-20 py-2 min-h-12 bg-muted/40">
+      <div class="flex items-center gap-2">
+        <a class="flex items-center gap-1 shrink-0" href="index.html">
+          <span class="text-base font-bold tracking-tight font-pixel">actuallyliquid.fun</span>
+        </a>
+        <div class="hidden sm:block h-4 w-px bg-border mx-1"></div>
+        <nav class="items-center hidden sm:flex">
+          <a class="relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors duration-150 text-muted-foreground hover:text-foreground" href="index.html">
+            <span class="relative z-10 inline">Home</span>
+          </a>
+        </nav>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 shrink-0">
+        <a class="h-7 px-2 flex items-center gap-1 btn-primary border-0 text-xs font-semibold text-violet-400 bg-violet-400/10 border border-violet-400" href="create.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Create
+        </a>
+        <button id="connectWalletBtn" class="h-7 px-2.5 flex items-center gap-1.5 btn-accent border-0 text-xs font-semibold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+          <span id="walletBtnText">Connect Wallet</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="px-4 sm:px-6 lg:px-12 xl:px-20 py-4 sm:py-6 flex-1 min-h-0 pb-0 overflow-hidden">
+    <div class="scrollable-page">
+      <div class="max-w-7xl mx-auto pb-4">
+        <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6" href="index.html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+          <span class="text-sm font-medium">Back to Coins</span>
+        </a>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- Left: Create Form -->
+          <div class="flex-[2] min-w-0 border border-border bg-card overflow-hidden h-fit">
+            <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border">
+              <h2 class="text-base sm:text-lg font-bold text-foreground">Create coin</h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 sm:w-5 sm:h-5 text-foreground"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+            <form id="createForm" class="p-4 flex flex-col gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4">
+                <!-- Image Upload -->
+                <div class="relative bg-muted border border-border overflow-hidden transition-colors w-full aspect-square cursor-pointer" id="imageDropZone">
+                  <input accept="image/jpeg,image/png,image/gif" class="hidden" type="file" id="imageInput">
+                  <div class="absolute bottom-3 left-4 right-4 flex justify-between items-center text-xs text-muted-foreground">
+                    <div class="flex items-center gap-1.5">
+                      <span>JPG</span><div class="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
+                      <span>PNG</span><div class="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
+                      <span>GIF</span>
+                    </div>
+                    <span>MAX 15 MB</span>
+                  </div>
+                  <div id="uploadPrompt" class="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12 text-foreground"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+                    <div class="text-center">
+                      <p class="text-foreground text-base font-semibold mb-4">Drag and drop file here or</p>
+                      <button type="button" id="selectFileBtn" class="px-4 py-2.5 bg-violet-400/10 border border-violet-400 inline-flex items-center gap-2 cursor-pointer hover:bg-violet-400/20 transition-colors">
+                        <span class="text-violet-400 text-sm font-semibold">Select file</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-violet-400"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <img id="imagePreview" class="absolute inset-0 w-full h-full object-cover hidden" src="" alt="">
+                </div>
+
+                <!-- Text Fields -->
+                <div class="flex flex-col gap-3">
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-foreground text-sm font-semibold">Coin name</label>
+                      <span id="nameCount" class="text-muted-foreground text-xs">0/32</span>
+                    </div>
+                    <input id="coinName" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:ring-1 focus:ring-violet-500/50" placeholder="Enter coin name" maxlength="32">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-foreground text-sm font-semibold">Ticker</label>
+                      <span id="tickerCount" class="text-muted-foreground text-xs">0/16</span>
+                    </div>
+                    <input id="coinTicker" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:ring-1 focus:ring-violet-500/50" placeholder="e.g. BTC, ETH" maxlength="16">
+                  </div>
+                  <div class="flex-1 flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-foreground text-sm font-semibold">Description</label>
+                      <span id="descCount" class="text-muted-foreground text-xs">0/256</span>
+                    </div>
+                    <textarea id="coinDesc" class="flex w-full border px-3 py-2 text-sm outline-none flex-1 min-h-[120px] resize-none border-border bg-muted text-foreground placeholder:text-muted-foreground focus:border-violet-500 focus:ring-1 focus:ring-violet-500/50" placeholder="Describe your coin..." maxlength="256"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Social Links -->
+              <details class="group" open>
+                <summary class="flex items-center gap-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-180"><path d="m6 9 6 6 6-6"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-muted-foreground"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                  <span class="text-sm font-medium text-foreground">Social links</span>
+                  <span class="text-xs text-muted-foreground">(optional)</span>
+                </summary>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-muted-foreground text-xs font-medium">Website</label>
+                      <span class="text-muted-foreground text-xs">0/64</span>
+                    </div>
+                    <input id="coinWebsite" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="https://example.com" maxlength="64">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-muted-foreground text-xs font-medium">Twitter</label>
+                      <span class="text-muted-foreground text-xs">0/64</span>
+                    </div>
+                    <input id="coinTwitter" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="https://x.com/username" maxlength="64">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-muted-foreground text-xs font-medium">Telegram</label>
+                      <span class="text-muted-foreground text-xs">0/64</span>
+                    </div>
+                    <input id="coinTelegram" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-10 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="https://t.me/groupname" maxlength="64">
+                  </div>
+                </div>
+              </details>
+
+              <!-- Dev Buy Amount -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-foreground text-sm font-semibold">Initial Dev Buy (SOL)</label>
+                  <span class="text-muted-foreground text-xs">optional</span>
+                </div>
+                <input id="devBuyAmount" type="number" step="0.01" min="0" class="w-full min-w-0 border px-3 py-2 text-sm outline-none h-11 bg-muted border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" placeholder="0.0" value="0">
+              </div>
+            </form>
+          </div>
+
+          <!-- Right: Preview + Launch -->
+          <div class="w-full lg:flex-1 lg:max-w-md shrink-0 space-y-6">
+            <!-- Preview Card -->
+            <div class="border border-border bg-card overflow-hidden h-fit">
+              <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border">
+                <h2 class="text-base sm:text-lg font-bold text-foreground">Preview</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 sm:w-5 sm:h-5 text-foreground"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </div>
+              <div class="p-3 sm:p-4 flex flex-col gap-4">
+                <div class="relative p-4 bg-card border border-border">
+                  <div class="flex gap-4 mb-4">
+                    <div class="w-20 h-20 shrink-0 relative">
+                      <div class="absolute inset-0 translate-x-[2px] translate-y-[2px] bg-foreground"></div>
+                      <div class="absolute inset-0 bg-muted border border-foreground flex items-center justify-center overflow-hidden">
+                        <img id="previewImage" class="w-full h-full object-cover hidden" src="" alt="">
+                        <svg id="previewImagePlaceholder" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-muted-foreground"><path d="M12 3v12"></path><path d="m17 8-5-5-5 5"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path></svg>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h3 id="previewName" class="text-foreground text-lg font-semibold truncate">Coin Name</h3>
+                      <p id="previewTicker" class="text-muted-foreground text-sm">$TICKER</p>
+                      <p id="previewDesc" class="text-muted-foreground text-xs mt-2 line-clamp-2">Your coin description...</p>
+                    </div>
+                  </div>
+                  <div class="flex justify-between items-center text-xs mb-2">
+                    <span class="text-muted-foreground">MC</span>
+                    <span class="text-foreground font-semibold">$0.00</span>
+                  </div>
+                  <div class="flex gap-0.5 h-2">
+                    <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400" style="width:0%"></div></div>
+                    <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400" style="width:0%"></div></div>
+                    <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400" style="width:0%"></div></div>
+                    <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400" style="width:0%"></div></div>
+                    <div class="flex-1 relative overflow-hidden bg-slate-200/20"><div class="absolute inset-y-0 left-0 bg-fuchsia-400" style="width:0%"></div></div>
+                  </div>
+                </div>
+
+                <!-- Create Button -->
+                <button id="createCoinBtn" type="button" class="flex items-center justify-center gap-2 py-3 w-full btn-accent border border-border text-white font-semibold cursor-pointer hover:opacity-90 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+                  <span id="createBtnText">Connect wallet to create</span>
+                </button>
+
+                <!-- Status -->
+                <div id="statusMsg" class="hidden text-center text-sm p-3 border border-border"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-border bg-background-header shrink-0">
+    <div class="px-4 sm:px-6 lg:px-12 xl:px-20 py-4 flex items-center justify-between gap-4">
+      <span class="text-sm text-muted-foreground">© 2026 actuallyliquid.fun</span>
+      <div class="flex items-center gap-4 text-sm">
+        <a class="text-muted-foreground hover:text-foreground transition-colors" href="#">Docs</a>
+        <span class="text-muted-foreground/50">•</span>
+        <a class="text-muted-foreground hover:text-foreground transition-colors" href="#">Terms</a>
+        <span class="text-muted-foreground/50">•</span>
+        <a class="text-muted-foreground hover:text-foreground transition-colors" href="#">Privacy</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Phantom Wallet + Pump.fun Integration -->
+<script type="module">
+  // State
+  let walletPublicKey = null;
+  let selectedFile = null;
+
+  // DOM refs
+  const connectBtn = document.getElementById('connectWalletBtn');
+  const walletBtnText = document.getElementById('walletBtnText');
+  const createBtn = document.getElementById('createCoinBtn');
+  const createBtnText = document.getElementById('createBtnText');
+  const statusMsg = document.getElementById('statusMsg');
+  const imageInput = document.getElementById('imageInput');
+  const imageDropZone = document.getElementById('imageDropZone');
+  const selectFileBtn = document.getElementById('selectFileBtn');
+  const imagePreview = document.getElementById('imagePreview');
+  const uploadPrompt = document.getElementById('uploadPrompt');
+  const previewImage = document.getElementById('previewImage');
+  const previewImagePlaceholder = document.getElementById('previewImagePlaceholder');
+
+  // Live preview
+  document.getElementById('coinName').addEventListener('input', e => {
+    document.getElementById('previewName').textContent = e.target.value || 'Coin Name';
+    document.getElementById('nameCount').textContent = e.target.value.length + '/32';
+  });
+  document.getElementById('coinTicker').addEventListener('input', e => {
+    document.getElementById('previewTicker').textContent = '$' + (e.target.value || 'TICKER');
+    document.getElementById('tickerCount').textContent = e.target.value.length + '/16';
+  });
+  document.getElementById('coinDesc').addEventListener('input', e => {
+    document.getElementById('previewDesc').textContent = e.target.value || 'Your coin description...';
+    document.getElementById('descCount').textContent = e.target.value.length + '/256';
+  });
+
+  // Image handling
+  selectFileBtn.addEventListener('click', () => imageInput.click());
+  imageDropZone.addEventListener('click', (e) => {
+    if (e.target === imageDropZone || e.target.closest('#uploadPrompt')) imageInput.click();
+  });
+
+  imageDropZone.addEventListener('dragover', e => { e.preventDefault(); imageDropZone.style.borderColor = '#a78bfa'; });
+  imageDropZone.addEventListener('dragleave', () => { imageDropZone.style.borderColor = ''; });
+  imageDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    imageDropZone.style.borderColor = '';
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  imageInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (file.size > 15 * 1024 * 1024) { showStatus('File too large (max 15MB)', 'error'); return; }
+    selectedFile = file;
+    const url = URL.createObjectURL(file);
+    imagePreview.src = url;
+    imagePreview.classList.remove('hidden');
+    uploadPrompt.classList.add('hidden');
+    previewImage.src = url;
+    previewImage.classList.remove('hidden');
+    previewImagePlaceholder.classList.add('hidden');
+  }
+
+  // Wallet connect (Phantom)
+  connectBtn.addEventListener('click', async () => {
+    if (walletPublicKey) { walletPublicKey = null; walletBtnText.textContent = 'Connect Wallet'; createBtnText.textContent = 'Connect wallet to create'; return; }
+    try {
+      const provider = window?.phantom?.solana || window?.solana;
+      if (!provider?.isPhantom) { showStatus('Please install Phantom wallet', 'error'); window.open('https://phantom.app/', '_blank'); return; }
+      const resp = await provider.connect();
+      walletPublicKey = resp.publicKey.toString();
+      walletBtnText.textContent = walletPublicKey.slice(0, 4) + '...' + walletPublicKey.slice(-4);
+      createBtnText.textContent = 'Create Coin';
+      showStatus('Wallet connected!', 'success');
+    } catch (err) {
+      showStatus('Wallet connection failed: ' + err.message, 'error');
+    }
+  });
+
+  // Create coin via pump.fun
+  createBtn.addEventListener('click', async () => {
+    if (!walletPublicKey) { connectBtn.click(); return; }
+
+    const name = document.getElementById('coinName').value.trim();
+    const symbol = document.getElementById('coinTicker').value.trim();
+    const description = document.getElementById('coinDesc').value.trim();
+    const website = document.getElementById('coinWebsite').value.trim();
+    const twitter = document.getElementById('coinTwitter').value.trim();
+    const telegram = document.getElementById('coinTelegram').value.trim();
+    const devBuy = parseFloat(document.getElementById('devBuyAmount').value) || 0;
+
+    if (!name) { showStatus('Please enter a coin name', 'error'); return; }
+    if (!symbol) { showStatus('Please enter a ticker', 'error'); return; }
+    if (!selectedFile) { showStatus('Please upload an image', 'error'); return; }
+
+    createBtnText.textContent = 'Uploading metadata...';
+    createBtn.disabled = true;
+
+    try {
+      // 1. Upload to IPFS via pump.fun
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('name', name);
+      formData.append('symbol', symbol);
+      formData.append('description', description);
+      if (twitter) formData.append('twitter', twitter);
+      if (telegram) formData.append('telegram', telegram);
+      if (website) formData.append('website', website);
+      formData.append('showName', 'true');
+
+      const metaResp = await fetch('https://pump.fun/api/ipfs', { method: 'POST', body: formData });
+      if (!metaResp.ok) throw new Error('IPFS upload failed');
+      const metaJSON = await metaResp.json();
+
+      createBtnText.textContent = 'Requesting transaction...';
+
+      // 2. Get transaction from pumpportal (local signing)
+      const tradeResp = await fetch('https://pumpportal.fun/api/trade-local', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publicKey: walletPublicKey,
+          action: 'create',
+          tokenMetadata: {
+            name: metaJSON.metadata.name,
+            symbol: metaJSON.metadata.symbol,
+            uri: metaJSON.metadataUri
+          },
+          mint: '', // will be generated server-side
+          denominatedInSol: 'true',
+          amount: devBuy,
+          slippage: 10,
+          priorityFee: 0.0005,
+          pool: 'pump'
+        })
+      });
+
+      if (!tradeResp.ok) throw new Error('Failed to generate transaction: ' + tradeResp.statusText);
+
+      createBtnText.textContent = 'Approve in wallet...';
+
+      // 3. Sign with Phantom
+      const txData = await tradeResp.arrayBuffer();
+      const provider = window.phantom?.solana || window.solana;
+
+      // Deserialize and sign
+      const { VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1.95.8');
+      const tx = VersionedTransaction.deserialize(new Uint8Array(txData));
+      const signedTx = await provider.signTransaction(tx);
+
+      createBtnText.textContent = 'Sending transaction...';
+
+      // 4. Send via Phantom
+      const signature = await provider.signAndSendTransaction
+        ? (await provider.signAndSendTransaction(tx)).signature
+        : null;
+
+      if (signature) {
+        showStatus('Token created! TX: ' + signature, 'success');
+        createBtnText.textContent = 'Created!';
+      } else {
+        // Fallback: send raw
+        const connection = new (await import('https://esm.sh/@solana/web3.js@1.95.8')).Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+        const sig = await connection.sendRawTransaction(signedTx.serialize());
+        showStatus('Token created! TX: ' + sig, 'success');
+        createBtnText.textContent = 'Created!';
+      }
+
+    } catch (err) {
+      showStatus('Error: ' + err.message, 'error');
+      createBtnText.textContent = 'Create Coin';
+    } finally {
+      createBtn.disabled = false;
+    }
+  });
+
+  function showStatus(msg, type) {
+    statusMsg.classList.remove('hidden');
+    statusMsg.textContent = msg;
+    statusMsg.className = 'text-center text-sm p-3 border border-border ' +
+      (type === 'error' ? 'text-red-400 bg-red-400/10' : 'text-green-400 bg-green-400/10');
+    setTimeout(() => statusMsg.classList.add('hidden'), 8000);
+  }
+</script>
+</body></html>
