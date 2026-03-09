@@ -253,8 +253,8 @@ const API_BASE = 'https://server-production-9526.up.railway.app';
 const HELIUS_RPC = 'https://mainnet.helius-rpc.com/?api-key=a12a538e-a61e-40fc-8de8-113e37aeb005';
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
-// Runner threshold: > 10 SOL real reserves
-const RUNNER_SOL_THRESHOLD = 10;
+// Runner threshold: >= 1/3 of 85 SOL bonding curve (~28.33 SOL)
+const RUNNER_SOL_THRESHOLD = 85 / 3;
 
 // Categorized tokens cache
 let categorized = { new: [], runners: [], migrated: [] };
